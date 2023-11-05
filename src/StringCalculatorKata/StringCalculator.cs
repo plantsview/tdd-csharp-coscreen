@@ -9,49 +9,17 @@ namespace StringCalculatorKata
     {    
         public static int Add(string numbers)
         {
-            var (delimiters, rest) = ExtractDelimitersAndNumbers(numbers);
-
-            return rest
-                    .Split(delimiters, StringSplitOptions.None)
-                    .Select(ParseOrZero)
-                    .Sum();
-        }
-
-        private static (string[], string) ExtractDelimitersAndNumbers(string numbers)
-        {
-            var delimiters = new List<string>() {",", "\n"};
-            
-            if (!numbers.StartsWith("//"))
-                return (delimiters.ToArray(), numbers);
-
-            var parts = numbers.Split('\n');
-            numbers = parts[1];
-            var candidateDelimiters = parts[0]
-                .Replace("/", "");
-            
-            if (candidateDelimiters.Contains("["))
-            {
-                var matches = Regex.Matches(candidateDelimiters, "[\\[!@#$%¨&*\\]+]{1}");
-                foreach (Match match in matches)
-                    delimiters.Add(match.Value);
-            }
-            
-            delimiters.Add(candidateDelimiters);
-        
-            return (delimiters.ToArray(), numbers);
-        }
-
-        private static int ParseOrZero(string candidate)
-        {
-            bool failure =  !int.TryParse(candidate, out int result);
-
-            if (failure || result > 1000)
+            if (string.IsNullOrWhiteSpace(numbers))
                 return 0;
 
-            if (result < 0)
-                throw new ArgumentException($"negatives not allowed: {result}");
+            Regex.Match(numbers, @"(?<!\d)-\d+")
+                .Groups.Cast<Group>()
+                .SelectMany(g => g.Captures)
+                .FirstOrDefault(c => throw new ArgumentException($"negatives not allowed: {c.Value}"));
 
-            return result;
+            return Regex.Split(numbers, @"\D+")
+                    .Select(n => int.TryParse(n, out int num) ? num : 0)
+                    .Sum();
         }
     }
 }
